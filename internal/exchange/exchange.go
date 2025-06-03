@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"golang.org/x/net/html/charset"
 )
@@ -20,7 +22,24 @@ type Valute struct {
 	Value    string `xml:"Value"`
 }
 
+var (
+	cachedRate float64
+	lastUpdate time.Time
+	mu         sync.Mutex
+)
+
 func GetCNYRate() (float64, error) {
+	mu.Lock()
+
+	defer mu.Unlock()
+
+	today := time.Now().Format("2006-01-02")
+	last := lastUpdate.Format("2006-01-02")
+
+	if today == last && cachedRate > 0 {
+		return cachedRate, nil
+	}
+
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "https://www.cbr.ru/scripts/XML_daily.asp", nil)
 	if err != nil {
@@ -51,8 +70,13 @@ func GetCNYRate() (float64, error) {
 
 	for _, v := range valCurs.Valutes {
 		if v.CharCode == "CNY" {
-			rate := strings.Replace(v.Value, ",", ".", 1)
-			return strconv.ParseFloat(rate, 64)
+			rateStr := strings.Replace(v.Value, ",", ".", 1)
+			rate, err := strconv.ParseFloat(rateStr, 64)
+			if err != nil {
+				return 0, err
+			}
+			cachedRate = rate
+			lastUpdate = time.Now()
 		}
 	}
 
