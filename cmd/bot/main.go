@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/alexbirbirdev/go-poison-bot/internal/bot"
+)
 
 func main() {
-	fmt.Println("started")
+	if err := bot.Start(); err != nil {
+		log.Fatal("Боту плохо", err)
+	}
 }
