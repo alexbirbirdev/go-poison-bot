@@ -77,6 +77,8 @@ func GetCNYRate() (float64, error) {
 			}
 			cachedRate = rate
 			lastUpdate = time.Now()
+
+			return rate, nil
 		}
 	}
 
