@@ -9,6 +9,8 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
+
+	"github.com/alexbirbirdev/go-poison-bot/internal/exchange"
 )
 
 func Start() error {
@@ -40,7 +42,14 @@ func Start() error {
 			continue
 		}
 
-		exchangeRate := 12.5 + 1.5
+		rate, err := exchange.GetCNYRate()
+		if err != nil {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ошибка при получении курса юаня"+err.Error())
+			bot.Send(msg)
+			continue
+		}
+
+		exchangeRate := rate + 0.8
 		delivery := 2000.0
 		comission := 1000.0
 
