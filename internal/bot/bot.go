@@ -1,8 +1,11 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
@@ -29,16 +32,22 @@ func Start() error {
 			continue
 		}
 
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-
-		switch update.Message.Text {
-		case "/start":
-			msg.Text = "Это ответ на /start"
-
-		default:
-			msg.Text = "Привет, начни взаимодействовать со мной /start"
+		input := strings.TrimSpace(update.Message.Text)
+		yuanAmount, err := strconv.ParseFloat(input, 64)
+		if err != nil {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Пожалуйста, введите только число — стоимость в юанях.")
+			bot.Send(msg)
+			continue
 		}
 
+		exchangeRate := 12.5 + 1.5
+		delivery := 2000.0
+		comission := 1000.0
+
+		rubPrice := yuanAmount*exchangeRate + delivery + comission
+
+		response := fmt.Sprintf("Цена в рублях: %.0f₽", rubPrice)
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, response)
 		bot.Send(msg)
 	}
 
