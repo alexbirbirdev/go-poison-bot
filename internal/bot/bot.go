@@ -1,17 +1,18 @@
 package bot
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 
-	"github.com/alexbirbirdev/go-poison-bot/internal/exchange"
+	"github.com/alexbirbirdev/go-poison-bot/internal/handlers"
 )
+
+var userLastMsgTime = make(map[int64]time.Time)
 
 func Start() error {
 	if err := godotenv.Load(); err != nil {
@@ -23,7 +24,7 @@ func Start() error {
 		return err
 	}
 
-	bot.Debug = true
+	bot.Debug = false
 	log.Printf("Бот запущен: @%s", bot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
@@ -34,67 +35,30 @@ func Start() error {
 			continue
 		}
 
+		chatID := update.Message.Chat.ID
+		now := time.Now()
+
+		lastTime, exists := userLastMsgTime[chatID]
+		if exists && now.Sub(lastTime) < 2*time.Second {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "ОКАК🐈‍⬛: Вы отправляете запросы слишком часто!")
+			bot.Send(msg)
+			continue
+		}
+		userLastMsgTime[chatID] = now
+
 		input := strings.TrimSpace(update.Message.Text)
 
-		if input == "/start" {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID,
-				"👋 Привет! Я — Poison калькулятор.\n\n"+
-					"💡 Просто отправь мне цену товара в юанях, а я посчитаю итоговую цену в рублях по формуле:\n"+
-					"`(стоимость товара в юанях * курc юаня) + доставка + комиссия`\n\n"+
-					"Отправь, например: `799`\n"+
-					"и я скажу точную цену.")
+		log.Printf("[%s]: %s", update.Message.From.UserName, update.Message.Text)
 
-			msg.ParseMode = "Markdown"
-			bot.Send(msg)
-			continue
+		switch input {
+		case "/start":
+			handlers.Start(bot, update)
+
+		case "/rate":
+			handlers.Rate(bot, update)
+		default:
+			handlers.Price(bot, update)
 		}
-		if input == "/rate" {
-			rate, err := exchange.GetCNYRate()
-			if err != nil {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ошибка при получении курса юаня: "+err.Error())
-				bot.Send(msg)
-				continue
-			}
-
-			adjusted := rate + 0.95
-			response := fmt.Sprintf(
-				"📈 Курс ЦБ: %.2f₽\n"+
-					"💰 Закупочный курс: %.2f₽",
-				rate, adjusted,
-			)
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, response)
-			bot.Send(msg)
-			continue
-		}
-
-		yuanAmount, err := strconv.ParseFloat(input, 64)
-		if err != nil {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Пожалуйста, введите только число — стоимость в юанях.")
-			bot.Send(msg)
-			continue
-		}
-		if yuanAmount <= 0 {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Цена не может быть отрицательной… :)")
-			bot.Send(msg)
-			continue
-		}
-
-		rate, err := exchange.GetCNYRate()
-		if err != nil {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ошибка при получении курса юаня: "+err.Error())
-			bot.Send(msg)
-			continue
-		}
-
-		exchangeRate := rate + 0.95
-		delivery := 2000.0
-		comission := 1000.0
-
-		rubPrice := yuanAmount*exchangeRate + delivery + comission
-
-		response := fmt.Sprintf("Цена в рублях: %.0f₽", rubPrice)
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, response)
-		bot.Send(msg)
 	}
 
 	return nil
