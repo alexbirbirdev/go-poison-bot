@@ -75,6 +75,7 @@ func GetCNYRate() (float64, error) {
 			if err != nil {
 				return 0, err
 			}
+			rate = roundToNearest(rate, 0.05)
 			cachedRate = rate
 			lastUpdate = time.Now()
 
@@ -83,4 +84,8 @@ func GetCNYRate() (float64, error) {
 	}
 
 	return 0, fmt.Errorf("курс юаня не найден :(")
+}
+
+func roundToNearest(value, step float64) float64 {
+	return float64(int((value/step+1)+0.5)) * step
 }

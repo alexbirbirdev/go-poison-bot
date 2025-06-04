@@ -34,9 +34,12 @@ func Price(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 
 	rubPrice := calc.YuanToRub(yuanAmount, rate)
 
-	response := fmt.Sprintf("Цена в рублях: %.0f₽", rubPrice)
+	response := fmt.Sprintf("Цена в рублях: *%.0f₽*", rubPrice)
 
-	reply.SendReply(bot, update.Message.Chat.ID, response)
+	// reply.SendReply(bot, update.Message.Chat.ID, response)
+	rep := tgbotapi.NewMessage(update.Message.Chat.ID, response)
+	rep.ParseMode = "Markdown"
+	bot.Send(rep)
 
 	shareBtn := tgbotapi.NewInlineKeyboardButtonURL("🤝 Поделиться ботом", os.Getenv("BOT_SHARE_URL"))
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(tgbotapi.NewInlineKeyboardRow(shareBtn))

@@ -22,7 +22,7 @@ func ReplyWithError(bot *tgbotapi.BotAPI, chatID int64, text string) {
 
 func WithTyping(bot *tgbotapi.BotAPI, chatID int64) {
 	action := tgbotapi.NewChatAction(chatID, tgbotapi.ChatTyping)
-	if _, err := bot.Send(action); err != nil {
+	if _, err := bot.Request(action); err != nil {
 		log.Printf("Ошибка при отправке typing-action: %v", err)
 	}
 }
