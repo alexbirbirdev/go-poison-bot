@@ -1,6 +1,9 @@
 package handlers
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+import (
+	"github.com/alexbirbirdev/go-poison-bot/internal/keyboard"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
 
 func Start(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID,
@@ -11,5 +14,7 @@ func Start(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 			"и я скажу точную цену.")
 
 	msg.ParseMode = "Markdown"
+
+	msg.ReplyMarkup = keyboard.GetMainKeyboard()
 	bot.Send(msg)
 }

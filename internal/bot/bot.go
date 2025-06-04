@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/alexbirbirdev/go-poison-bot/internal/handlers"
+	"github.com/alexbirbirdev/go-poison-bot/internal/reply"
 )
 
 var userLastMsgTime = make(map[int64]time.Time)
@@ -40,8 +41,7 @@ func Start() error {
 
 		lastTime, exists := userLastMsgTime[chatID]
 		if exists && now.Sub(lastTime) < 2*time.Second {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "ОКАК🐈‍⬛: Вы отправляете запросы слишком часто!")
-			bot.Send(msg)
+			reply.SendReply(bot, update.Message.Chat.ID, "ОКАК🐈‍⬛: Вы отправляете запросы слишком часто!")
 			continue
 		}
 		userLastMsgTime[chatID] = now
@@ -53,9 +53,14 @@ func Start() error {
 		switch input {
 		case "/start":
 			handlers.Start(bot, update)
-
+		case "О боте":
+			handlers.Start(bot, update)
 		case "/rate":
 			handlers.Rate(bot, update)
+		case "Курс юаня":
+			handlers.Rate(bot, update)
+		case "Рассчитать цену":
+			handlers.Price(bot, update)
 		default:
 			handlers.Price(bot, update)
 		}
