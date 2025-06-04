@@ -34,7 +34,7 @@ func Price(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 
 	rubPrice := calc.YuanToRub(yuanAmount, rate)
 
-	response := fmt.Sprintf("Цена в рублях: *%.0f РУБ.*", rubPrice)
+	response := fmt.Sprintf("Цена в рублях: *%.0f ₽*", rubPrice)
 
 	// reply.SendReply(bot, update.Message.Chat.ID, response)
 	rep := tgbotapi.NewMessage(update.Message.Chat.ID, response)
